@@ -4,16 +4,16 @@
 $elapsed = [System.Diagnostics.Stopwatch]::StartNew()
 
 
-#Path variables
-$source = "E:\Flat File\"
-#$source = "C:\Users\Kamil\OneDrive\JetStar\Flat_FIle_Source\Guest\"
+#Load objects to variables
+#$source = "E:\Flat File\"
+$source = "C:\Users\Kamil\OneDrive\JetStar\Flat_FIle_Source\Guest\"
 
-$target = "E:\data\outbound\boxever\"
-#$target = "C:\Users\Kamil\OneDrive\JetStar\Flat_FIle_Source\Guest\"
+#$target = "E:\data\outbound\boxever\"
+$target = "C:\Users\Kamil\OneDrive\JetStar\Flat_FIle_Source\Guest\"
 
 $guest = Import-csv ($source + "Guest.csv")
 $LoadRunID = $guest[1].LoadRunID
-#$subscription = Import-csv ($source + "GuestSubscriptions.csv")
+$subscription = Import-csv ($source + "GuestSubscriptions.csv")
 $Identifier = Import-csv ($source + "GuestIdentifiers.csv")
 $extension = Import-csv ($source + "GuestExtensions.csv")   
 
@@ -63,7 +63,6 @@ foreach ($scvid in $guest){
     $scvid.PSObject.Properties.Remove('LoadRunID')
 
 	#Adding subscriptions to guest
-    <#
 	$scvid | Add-Member -MemberType NoteProperty -Name subscriptions -Value (New-object System.Collections.Arraylist)
     
 	foreach ($subscription in $subscription){
@@ -74,7 +73,7 @@ foreach ($scvid in $guest){
 			$scvid.subscriptions.add($GUID)
 		}
 	}
-    #>
+
 	#Adding Identifiers to guest
 	$scvid | Add-Member -MemberType NoteProperty -Name identifiers -Value (New-object System.Collections.Arraylist)
 
@@ -104,7 +103,7 @@ foreach ($scvid in $guest){
 }
 
 #free up memory
-#$subscription = $null
+$subscription = $null
 $Identifier = $null
 $extension = $null
 [System.GC]::Collect()
@@ -137,7 +136,7 @@ $outer = $null
 $content = [System.IO.File]::ReadAllText($destinationFile);
 
 $expr1 = '\n+|\t+|\s+|\r+';
-$expr2 = '\"\w+\":\[?null\]?,?|\"\w+\":"",?|\"\w+\":\[\],?|(;|,)\w+@\w+.\w+';
+$expr2 = '\"\w+\":\[?null\]?,?|\"\w+\":"",?|\"\w+\":\[\],?';
 $expr3 = ',}';
 $expr4 = '\*';
 $expr5 = '}},{"ref"';
@@ -154,9 +153,9 @@ $sixthResult= [System.Text.RegularExpressions.Regex]::Replace($fifthResult, $exp
 #$timestamp = Get-Date -Format "yyyy_M_dd_Hmmss"
 $file = $target + "guest_final_" + $LoadRunID + ".json"
 
-[System.IO.File]::WriteAllText($file, $sixthResult );
+#[System.IO.File]::WriteAllText($file, $sixthResult, 'UTF8');
 write-host "Writting to " $file
-#$sixthResult | Set-Content -Path $file -Encoding UTF8
+$sixthResult | Set-Content -Path $file -Encoding UTF8
 
 write-host "Ended at $(get-date)"
 write-host "Total Elapsed Time: $($elapsed.Elapsed.ToString())"
