@@ -4,16 +4,20 @@
 $elapsed = [System.Diagnostics.Stopwatch]::StartNew()
 
 
-#Load objects to variables
-#$source = "E:\Flat File\"
-$source = "C:\Users\Kamil\OneDrive\JetStar\Flat_FIle_Source\Guest\"
+#Path variables
+$source = "E:\Flat File\"
+#$source = "C:\Users\Kamil\OneDrive\JetStar\Flat_FIle_Source\Guest\"
 
-#$target = "E:\data\outbound\boxever\"
-$target = "C:\Users\Kamil\OneDrive\JetStar\Flat_FIle_Source\Guest\"
+$target = "E:\data\outbound\boxever\"
+#$target = "C:\Users\Kamil\OneDrive\JetStar\Flat_FIle_Source\Guest\"
 
 $guest = Import-csv ($source + "Guest.csv")
+if($guest.Count -eq 0){
+    Write-Host "No records found"
+    exit 0
+    }
 $LoadRunID = $guest[1].LoadRunID
-$subscription = Import-csv ($source + "GuestSubscriptions.csv")
+#$subscription = Import-csv ($source + "GuestSubscriptions.csv")
 $Identifier = Import-csv ($source + "GuestIdentifiers.csv")
 $extension = Import-csv ($source + "GuestExtensions.csv")   
 
@@ -63,6 +67,7 @@ foreach ($scvid in $guest){
     $scvid.PSObject.Properties.Remove('LoadRunID')
 
 	#Adding subscriptions to guest
+    <#
 	$scvid | Add-Member -MemberType NoteProperty -Name subscriptions -Value (New-object System.Collections.Arraylist)
     
 	foreach ($subscription in $subscription){
@@ -73,7 +78,7 @@ foreach ($scvid in $guest){
 			$scvid.subscriptions.add($GUID)
 		}
 	}
-
+    #>
 	#Adding Identifiers to guest
 	$scvid | Add-Member -MemberType NoteProperty -Name identifiers -Value (New-object System.Collections.Arraylist)
 
@@ -103,7 +108,7 @@ foreach ($scvid in $guest){
 }
 
 #free up memory
-$subscription = $null
+#$subscription = $null
 $Identifier = $null
 $extension = $null
 [System.GC]::Collect()
@@ -136,7 +141,7 @@ $outer = $null
 $content = [System.IO.File]::ReadAllText($destinationFile);
 
 $expr1 = '\n+|\t+|\s+|\r+';
-$expr2 = '\"\w+\":\[?null\]?,?|\"\w+\":"",?|\"\w+\":\[\],?';
+$expr2 = '\"\w+\":\[?null\]?,?|\"\w+\":"",?|\"\w+\":\[\],?|(;|,)\w+@\w+.\w+';
 $expr3 = ',}';
 $expr4 = '\*';
 $expr5 = '}},{"ref"';
@@ -153,9 +158,39 @@ $sixthResult= [System.Text.RegularExpressions.Regex]::Replace($fifthResult, $exp
 #$timestamp = Get-Date -Format "yyyy_M_dd_Hmmss"
 $file = $target + "guest_final_" + $LoadRunID + ".json"
 
-#[System.IO.File]::WriteAllText($file, $sixthResult, 'UTF8');
+[System.IO.File]::WriteAllText($file, $sixthResult );
 write-host "Writting to " $file
-$sixthResult | Set-Content -Path $file -Encoding UTF8
+#$sixthResult | Set-Content -Path $file -Encoding UTF8
 
+
+#compressing to gzip
+
+$input = New-Object System.IO.FileStream $file, ([IO.FileMode]::Open), ([IO.FileAccess]::Read), ([IO.FileShare]::Read);
+$output = New-Object System.IO.FileStream ($file+".gz"), ([IO.FileMode]::Create), ([IO.FileAccess]::Write), ([IO.FileShare]::None)
+$gzipStream = New-Object System.IO.Compression.GzipStream $output, ([IO.Compression.CompressionMode]::Compress)
+
+try
+{
+    $buffer = New-Object byte[](1024);
+
+    while($true)
+    {
+        $read = $input.Read($buffer, 0, 1024)
+
+        if ($read -le 0)
+        {
+            break;
+        }
+
+        $gzipStream.Write($buffer, 0, $read)
+     }
+}
+finally
+{
+    $gzipStream.Close();
+    $output.Close();
+    $input.Close();
+}
+Remove-Item $file
 write-host "Ended at $(get-date)"
 write-host "Total Elapsed Time: $($elapsed.Elapsed.ToString())"

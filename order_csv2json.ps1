@@ -341,5 +341,34 @@ $file = $destinationFolder+"order_final_" + $LoadRunID + ".json"
 write-host "Writting to " $file
 #$sixthResult | Set-Content -Path $file -Encoding UTF8
 
+#compressing to gzip
+
+$input = New-Object System.IO.FileStream $file, ([IO.FileMode]::Open), ([IO.FileAccess]::Read), ([IO.FileShare]::Read);
+$output = New-Object System.IO.FileStream ($file+".gz"), ([IO.FileMode]::Create), ([IO.FileAccess]::Write), ([IO.FileShare]::None)
+$gzipStream = New-Object System.IO.Compression.GzipStream $output, ([IO.Compression.CompressionMode]::Compress)
+
+try
+{
+    $buffer = New-Object byte[](1024);
+
+    while($true)
+    {
+        $read = $input.Read($buffer, 0, 1024)
+
+        if ($read -le 0)
+        {
+            break;
+        }
+
+        $gzipStream.Write($buffer, 0, $read)
+     }
+}
+finally
+{
+    $gzipStream.Close();
+    $output.Close();
+    $input.Close();
+}
+Remove-Item $file
 write-host "Ended at $(get-date)"
 write-host "Total Elapsed Time: $($elapsed.Elapsed.ToString())"
