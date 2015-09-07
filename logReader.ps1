@@ -5,12 +5,12 @@
     $logsFolder = "E:\data\outbound\boxever\Log"
      
 
-    Get-ChildItem $logsFolder -Filter "*.gz" | `
+    Get-ChildItem $logsFolder -Filter "*.log" | `
 
     Foreach-Object{
             $errors = 0
             
-            #decompress gzipped log file
+            <#decompress gzipped log file
             $input = New-Object System.IO.FileStream $_.FullName, ([IO.FileMode]::Open), ([IO.FileAccess]::Read), ([IO.FileShare]::Read);
             $output = New-Object System.IO.FileStream $_.FullName.Replace(".gz",""), ([IO.FileMode]::Create), ([IO.FileAccess]::Write), ([IO.FileShare]::None)
             $gzipStream = New-Object System.IO.Compression.GzipStream $input, ([IO.Compression.CompressionMode]::Decompress)
@@ -30,10 +30,10 @@
                 $output.Close();
                 $input.Close();
             }
-
+        
         $unzippedFile = $_.FullName.Replace(".gz","")
-
-        $content = Get-Content $unzippedFile 
+        #>
+        $content = Get-Content $_.FullName 
         $content | `
 
         ForEach-Object {
