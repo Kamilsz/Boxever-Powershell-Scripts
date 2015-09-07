@@ -3,9 +3,11 @@
     [int]$errorThreshold = 10;
 
     $logsFolder = "E:\data\outbound\boxever\Log"
+    $sourcePath = $logsFolder + "\*"
+    $raiseException = $false
      
 
-    Get-ChildItem $logsFolder -Filter "*.log" | `
+    Get-ChildItem -Path $sourcePath -Include "*.log" | `
 
     Foreach-Object{
             $errors = 0
@@ -33,12 +35,22 @@
         
         $unzippedFile = $_.FullName.Replace(".gz","")
         #>
-        $content = Get-Content $_.FullName 
+        $content = Get-Content $_.FullName
+        Write-Host "" 
+        Write-Host "Processing " $_.Name
         $content | `
 
         ForEach-Object {
             if($_.contains('"code":"4')){
                 $errors ++
+            } elseif($_.contains('No logs available')){
+                Write-Host "No logs available"
+                $errors = $content.Count
+            } elseif($_.contains('Upload completed')){
+                $errors = 0
+                $skipFile=$false
+            }elseif($_.contains('Boxever File Upload')){
+                $skipFile = $true
             }
            
 
@@ -47,24 +59,37 @@
         [int]$ratio = ($errors * 100) /  $content.Count
         
          
-        Remove-Item $unzippedFile
+        #Uncomment line below if unzipping file is required
+        #Remove-Item $unzippedFile
         
         #if number of errors equalt to or exceeds threshold, throw an error
-        if($ratio -ge $errorThreshold) {
-            Write-Host "Error: threshold exceeded in " $_.FullName
+        if(!$skipFile){
+            if($ratio -ge $errorThreshold) {
+                $destination = $logsFolder + "\Error\" + $_.Name
+                Write-Host "Error: threshold exceeded in " $_.FullName
+                $raiseException = $true
+            }
+
+            #otherwise move file to success folder
+            else {
+                $destination = $logsFolder + "\Success\" + $_.Name
+                Write-Host "Success: number of errors within acceptable limit for " $_.FullName                         
+            }
             Write-Host "Number of errors: " $errors
             Write-Host "Number of records: " $content.Count
-            Write-Host "Ratio: " $ratio
-            exit 1
-        }
-
-        #otherwise move file to success folder
-        else {
-            $destination = $logsFolder + "\Success\" + $_
+            Write-Host "Error ratio: " $ratio
+            Write-Host "Moving file to " $destination
             Move-Item $_.FullName $destination
+        }else {
+            Write-Host "Upload in progres. Skipping " $_.Name
         }
-        
     
     }
+    if($raiseException){
+        Write-Host "" 
+        Write-Host "Errors were found. Please check Error folder for details."
+        exit 1
+    }
+    Write-Host "" 
     Write-Host "Success! No errors found."
     exit 0
