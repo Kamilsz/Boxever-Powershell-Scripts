@@ -11,7 +11,7 @@
 
     Foreach-Object{
             $errors = 0
-            
+             $skipFile = $false
             <#decompress gzipped log file
             $input = New-Object System.IO.FileStream $_.FullName, ([IO.FileMode]::Open), ([IO.FileAccess]::Read), ([IO.FileShare]::Read);
             $output = New-Object System.IO.FileStream $_.FullName.Replace(".gz",""), ([IO.FileMode]::Create), ([IO.FileAccess]::Write), ([IO.FileShare]::None)
