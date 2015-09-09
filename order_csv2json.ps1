@@ -8,9 +8,20 @@ $elapsed = [System.Diagnostics.Stopwatch]::StartNew()
 $sourceFolder = "E:\Flat File\"
 $destinationFolder = "E:\data\outbound\boxever\"
 
+#check if there is data in Orders
+$source = $sourceFolder + "order.csv"
+$orders = Import-csv $source
+
+if($orders.Count -eq 0){
+    Write-Host "No records found"
+    exit 0
+}
+
+
 #Create phoneNumber, address fields on Contact and clean empty fields
 $source = $sourceFolder + "OrderContact.csv"
 $orderContacts = Import-csv $source
+
 
 $source = $sourceFolder + "OrderPersonIdentifier.csv"
 $identifiers  = Import-csv $source
@@ -69,8 +80,7 @@ $identifiers = $null
 $i=1
 
 #Adding contacts to orders
-$source = $sourceFolder + "order.csv"
-$orders = Import-csv $source
+
 
 $LoadRunID = $orders[1].LoadRunID
 $contacts = New-object System.Collections.ArrayList

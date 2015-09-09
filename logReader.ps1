@@ -1,6 +1,6 @@
 ﻿#This script reads and interprets Boxever log files
 
-    [int]$errorThreshold = 10;
+    [int]$errorThreshold = 3;
 
     $logsFolder = "E:\data\outbound\boxever\Log"
     $sourcePath = $logsFolder + "\*"
@@ -41,16 +41,27 @@
         $content | `
 
         ForEach-Object {
-            if($_.contains('"code":"4')){
+            if($_.contains('"code":"') -and !$_.contains('"code":"2')){
                 $errors ++
             } elseif($_.contains('No logs available')){
-                Write-Host "No logs available"
-                $errors = $content.Count
+                Write-Host "No logs available, load successfull!"
+                $errors = 0
             } elseif($_.contains('Upload completed')){
                 $errors = 0
                 $skipFile=$false
             }elseif($_.contains('Boxever File Upload')){
-                $skipFile = $true
+                
+                    #extract date and time when the file was uploaded
+                    $_ -match '[a-z,A-Z]{3}\s\d\d\s\d\d:\d\d:\d\d\sEST\s\d{4}'
+                    $rawUploadTime = $matches[0].Replace('EST ','')
+                    $uploadTime = [dateTime]::ParseExact($rawUploadTime, "MMM dd HH:mm:ss yyyy",$null)
+                    $timeDifference = New-TimeSpan -Start $uploadTime
+                    if($timeDifference.TotalMinutes -gt 5){
+                        $errors = $content.Count
+                        Write-Host "Failed to upload file within 5 minutes"
+                    } else{
+                     $skipFile = $true
+                    }
             }
            
 
