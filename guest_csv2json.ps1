@@ -141,7 +141,7 @@ $outer = $null
 $content = [System.IO.File]::ReadAllText($destinationFile);
 
 $expr1 = '\n+|\t+|\s+|\r+';
-$expr2 = '\"\w+\":\[?null\]?,?|\"\w+\":"",?|\"\w+\":\[\],?|(,|;)\w+((\.|\_)\w+)?@\w+.\w+((\.|\_)\w+)?';
+$expr2 = '\"\w+\":\[?null\]?,?|\"\w+\":"",?|\"\w+\":\[\],?|(,|;).*@.*(?=",)';
 $expr3 = ',}';
 $expr4 = '\*';
 $expr5 = '}},{"ref"';
