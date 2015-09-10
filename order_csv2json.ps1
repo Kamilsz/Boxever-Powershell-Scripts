@@ -328,7 +328,7 @@ $outerObjects | ConvertTo-Json -Depth 10 | Out-file $target
 $content = [System.IO.File]::ReadAllText($target);
 
 $expr1 = '\n+|\t+|\s+|\r+';
-$expr2 = '\"\w+\":\[?null\]?,?|\"\w+\":"",?|\"\w+\":\[\],?|"PassengerID":"0",|{},?';
+$expr2 = '\"\w+\":\[?null\]?,?|\"\w+\":"",?|\"\w+\":\[\],?|"PassengerID":"0",|{},?|(,|;).*@.*(?=",)';
 $expr3 = ',}';
 $expr4 = '\*';
 $expr5 = '}},{"ref"';
